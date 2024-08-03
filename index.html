@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Bot Detection</title>
   <script>
+    // Initialize an agent at application startup, once per page/app.
+    const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load());
+
     // Main bot detection function
     function detectBot() {
       const detectors = {
@@ -30,15 +33,22 @@
         }
       }
 
-      // Mouse movement detection
-      detectMouseMovement((mouseMoved) => {
-        detections.noMouseMovement = { bot: !mouseMoved };
-        if (!mouseMoved) {
-          verdict = { bot: true };
-        }
-        // Returns the detection results and the final verdict
-        updateResult(detections, verdict);
-      });
+      // Integrate Botd detection results
+      botdPromise
+        .then((botd) => botd.detect())
+        .then((result) => {
+          detections.botd = result;
+          if (result.bot) {
+            verdict = { bot: true };
+          }
+          // Returns the detection results and the final verdict
+          updateResult(detections, verdict);
+        })
+        .catch((error) => {
+          console.error(error);
+          // Even if Botd fails, we should return the existing detections and verdict
+          updateResult(detections, verdict);
+        });
     }
 
     // Function to detect inconsistent eval lengths
@@ -76,22 +86,6 @@
         (length === 37 && !["firefox", "safari"].includes(browser)) ||
         (length === 39 && !["internet_explorer"].includes(browser))
       );
-    }
-
-    // Function to detect mouse movement
-    function detectMouseMovement(callback) {
-      let hasMoved = false;
-
-      function onMouseMove() {
-        hasMoved = true;
-        document.removeEventListener("mousemove", onMouseMove);
-      }
-
-      document.addEventListener("mousemove", onMouseMove);
-
-      setTimeout(() => {
-        callback(hasMoved);
-      }, 5000); // 5 seconds to detect mouse movement
     }
 
     // Function to update the result
